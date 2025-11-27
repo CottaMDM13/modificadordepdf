@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Inserir páginas em PDF</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <style>
+    :root {
+      /* Tema claro (default) */
+      --bg: #f1f5f9;
+      --bg-card: #ffffff;
+      --bg-card-soft: #e5e7eb;
+      --border-subtle: #d1d5db;
+      --text-main: #020617;
+      --text-muted: #6b7280;
+      --accent: #6366f1;
+      --accent-soft: rgba(99, 102, 241, 0.08);
+      --accent-strong: rgba(99, 102, 241, 0.18);
+      --shadow-main: 0 20px 40px rgba(15, 23, 42, 0.12);
+      --surface-subtle: #f9fafb;
+      --danger-soft: rgba(248, 113, 113, 0.12);
+      --danger-border: rgba(248, 113, 113, 0.6);
+      --danger-text: #b91c1c;
+    }
+
+    body.dark {
+      /* Tema escuro */
+      --bg: #0f172a;
+      --bg-card: #020617;
+      --bg-card-soft: #020617;
+      --border-subtle: #1e293b;
+      --text-main: #e5e7eb;
+      --text-muted: #94a3b8;
+      --accent: #6366f1;
+      --accent-soft: rgba(56, 189, 248, 0.06);
+      --accent-strong: rgba(56, 189, 248, 0.22);
+      --shadow-main: 0 20px 40px rgba(15, 23, 42, 0.9);
+      --surface-subtle: #020617;
+      --danger-soft: rgba(248, 113, 113, 0.18);
+      --danger-border: rgba(248, 113, 113, 0.7);
+      --danger-text: #fecaca;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: radial-gradient(circle at top left, rgba(129, 140, 248, 0.15), transparent) , var(--bg);
+      color: var(--text-main);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+      padding: 16px;
+      transition: background 0.2s ease, color 0.2s ease;
+    }
+
+    .card {
+      position: relative;
+      background: var(--bg-card);
+      border-radius: 20px;
+      padding: 24px 24px 28px;
+      max-width: 520px;
+      width: 100%;
+      box-shadow: var(--shadow-main);
+      border: 1px solid var(--border-subtle);
+      overflow: hidden;
+    }
+
+    .card::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background: radial-gradient(circle at top left, var(--accent-soft), transparent 55%);
+      opacity: 0.9;
+    }
+
+    .card-inner {
+      position: relative;
+      z-index: 1;
+    }
+
+    h1 {
+      margin-top: 0;
+      font-size: 1.45rem;
+      margin-bottom: 0.25rem;
+      letter-spacing: -0.03em;
+    }
+
+    .subtitle {
+      font-size: 0.86rem;
+      color: var(--text-muted);
+      margin-bottom: 1.25rem;
+      line-height: 1.5;
+    }
+
+    label {
+      font-size: 0.82rem;
+      margin-bottom: 0.25rem;
+      display: block;
+      color: var(--text-main);
+      font-weight: 500;
+    }
+
+    .field {
+      margin-bottom: 1rem;
+    }
+
+    .hint {
+      font-size: 0.76rem;
+      color: var(--text-muted);
+      margin-top: 0.25rem;
+    }
+
+    .button {
+      margin-top: 0.75rem;
+      width: 100%;
+      padding: 11px 16px;
+      border-radius: 999px;
+      border: none;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.92rem;
+      letter-spacing: 0.02em;
+      background: radial-gradient(circle at 0 0, #22d3ee, var(--accent));
+      color: white;
+      box-shadow: 0 10px 30px rgba(79, 70, 229, 0.7);
+      transition: transform 0.08s ease, box-shadow 0.08s ease, filter 0.08s ease;
+    }
+
+    .button:hover {
+      transform: translateY(-1px);
+      filter: brightness(1.05);
+      box-shadow: 0 16px 40px rgba(79, 70, 229, 0.85);
+    }
+
+    .button:active {
+      transform: translateY(0);
+      box-shadow: 0 8px 20px rgba(79, 70, 229, 0.6);
+    }
+
+    .alerts {
+      margin-bottom: 0.75rem;
+    }
+
+    .alert {
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-size: 0.76rem;
+      margin-bottom: 0.4rem;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .alert-error {
+      background: var(--danger-soft);
+      border: 1px solid var(--danger-border);
+      color: var(--danger-text);
+    }
+
+    .alert span.icon {
+      font-size: 0.9rem;
+    }
+
+    .section-title {
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--text-muted);
+      margin-top: 0.75rem;
+      margin-bottom: 0.35rem;
+    }
+
+    .divider {
+      height: 1px;
+      width: 100%;
+      background: linear-gradient(to right, rgba(148, 163, 184, 0.2), rgba(148, 163, 184, 0.02));
+      margin: 0.7rem 0 0.9rem;
+      border-radius: 999px;
+    }
+
+    /* Layout para upload bonitinho */
+    .file-input {
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: var(--surface-subtle);
+      border: 1px dashed var(--border-subtle);
+      cursor: pointer;
+      overflow: hidden;
+    }
+
+    .file-input input[type="file"] {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+    }
+
+    .file-label {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      flex: 1;
+    }
+
+    .file-button {
+      font-size: 0.78rem;
+      border-radius: 999px;
+      padding: 6px 10px;
+      border: none;
+      background: var(--accent-strong);
+      color: var(--accent);
+      font-weight: 600;
+      cursor: pointer;
+      flex-shrink: 0;
+      pointer-events: none; /* clique vai pro input, que está por cima */
+    }
+
+    .file-chip {
+      font-size: 0.7rem;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      flex-shrink: 0;
+    }
+
+    .file-input:hover {
+      border-style: solid;
+      border-color: var(--accent);
+    }
+
+    .top-bar {
+      display: flex;
+      justify-content: flex-end;
+      margin-bottom: 0.75rem;
+    }
+
+    .theme-toggle {
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.7);
+      background: rgba(148, 163, 184, 0.06);
+      font-size: 0.76rem;
+      padding: 4px 10px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+      color: var(--text-muted);
+      backdrop-filter: blur(6px);
+    }
+
+    .theme-toggle span.icon {
+      font-size: 0.9rem;
+    }
+
+    @media (max-width: 600px) {
+      .card {
+        padding: 20px 16px 22px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="card-inner">
+      <div class="top-bar">
+        <button type="button" class="theme-toggle" id="themeToggle">
+          <span class="icon">🌙</span>
+          <span class="label">Modo escuro</span>
+        </button>
+      </div>
+
+      <h1>Inserir páginas em PDF</h1>
+      <p class="subtitle">
+        Envie o PDF original e os PDFs com as páginas extras. O sistema irá:
+        <br>• Inserir o PDF de 5 páginas logo após a primeira página do original.
+        <br>• Inserir o PDF de 2 páginas logo após a última página do original.
+      </p>
+
+      <div class="alerts">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div class="alert alert-{{ category }}">
+                <span class="icon">⚠️</span>
+                <span>{{ message }}</span>
+              </div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+      </div>
+
+      <form method="POST" enctype="multipart/form-data">
+        <div class="section-title">1. PDF original</div>
+        <div class="field">
+          <label for="original">PDF original</label>
+          <div class="file-input">
+            <input type="file" id="original" name="original" accept="application/pdf" required>
+            <span class="file-chip">Base</span>
+            <span class="file-label" data-placeholder="Nenhum arquivo selecionado">
+              Nenhum arquivo selecionado
+            </span>
+            <button type="button" class="file-button">Escolher</button>
+          </div>
+          <p class="hint">Documento base onde serão feitas as inserções.</p>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="section-title">2. Páginas após a primeira</div>
+        <div class="field">
+          <label for="pdf_5">PDF com as 5 páginas</label>
+          <div class="file-input">
+            <input type="file" id="pdf_5" name="pdf_5" accept="application/pdf" required>
+            <span class="file-chip">+5 após 1ª</span>
+            <span class="file-label" data-placeholder="Nenhum arquivo selecionado">
+              Nenhum arquivo selecionado
+            </span>
+            <button type="button" class="file-button">Escolher</button>
+          </div>
+          <p class="hint">Este PDF será inserido logo após a primeira página do original.</p>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="section-title">3. Páginas após a última</div>
+        <div class="field">
+          <label for="pdf_2">PDF com as 2 páginas</label>
+          <div class="file-input">
+            <input type="file" id="pdf_2" name="pdf_2" accept="application/pdf" required>
+            <span class="file-chip">+2 final</span>
+            <span class="file-label" data-placeholder="Nenhum arquivo selecionado">
+              Nenhum arquivo selecionado
+            </span>
+            <button type="button" class="file-button">Escolher</button>
+          </div>
+          <p class="hint">Este PDF será inserido logo após a última página do original.</p>
+        </div>
+
+        <button type="submit" class="button">
+          Gerar PDF modificado
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    // --------- Tema claro/escuro ---------
+    (function () {
+      const body = document.body;
+      const toggle = document.getElementById("themeToggle");
+      const labelSpan = toggle.querySelector(".label");
+      const iconSpan = toggle.querySelector(".icon");
+
+      // carrega tema salvo
+      const saved = window.localStorage.getItem("pdfTheme");
+      if (saved === "dark") {
+        body.classList.add("dark");
+        labelSpan.textContent = "Modo claro";
+        iconSpan.textContent = "☀️";
+      }
+
+      toggle.addEventListener("click", () => {
+        const isDark = body.classList.toggle("dark");
+        if (isDark) {
+          labelSpan.textContent = "Modo claro";
+          iconSpan.textContent = "☀️";
+          window.localStorage.setItem("pdfTheme", "dark");
+        } else {
+          labelSpan.textContent = "Modo escuro";
+          iconSpan.textContent = "🌙";
+          window.localStorage.setItem("pdfTheme", "light");
+        }
+      });
+    })();
+
+    // --------- Nome dos arquivos nos inputs bonitos ---------
+    (function () {
+      const fileInputs = document.querySelectorAll(".file-input input[type='file']");
+
+      fileInputs.forEach((input) => {
+        const wrapper = input.parentElement;
+        const label = wrapper.querySelector(".file-label");
+        const placeholder = label?.dataset.placeholder || "Nenhum arquivo selecionado";
+
+        const updateLabel = () => {
+          if (!label) return;
+          if (input.files && input.files.length > 0) {
+            label.textContent = input.files[0].name;
+          } else {
+            label.textContent = placeholder;
+          }
+        };
+
+        input.addEventListener("change", updateLabel);
+      });
+    })();
+  </script>
+</body>
+</html>
